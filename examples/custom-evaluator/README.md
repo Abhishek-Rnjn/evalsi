@@ -48,6 +48,13 @@ def valid_citations(record: Record, *, min_citations: int = 1) -> Score: ...
   other exception is reported as an **error** and excluded from the metrics.
 - **`Score`** holds exactly one of `number`, `passed`, `label` or `structured`,
   plus an `explanation` that appears in reports.
+- **Metric names in results and gates**: a metric named like the evaluator's
+  short name keeps that name (`valid-citations` here). Any other metric is
+  reported as `<evaluator>.<metric>`, where `<evaluator>` is the short name
+  (or the alias it was bound with). An evaluator with several outputs returns
+  a list of `Score`s, each with `name=` set, so a metric `cited` from
+  `acme/valid-citations` is gated as `{"valid-citations.cited": 1.0}`; a bare
+  `{"cited": 1.0}` fails with "no such metric in this run".
 - The decorated object is callable and `.bind(params).run(...)` runs it the
   way the runner does, which is what the unit tests use.
 
