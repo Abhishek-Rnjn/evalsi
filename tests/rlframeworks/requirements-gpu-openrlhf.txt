@@ -4,7 +4,7 @@
 # the engine's CUTLASS library requires protobuf <7; the SDK requires >=7.35.
 torch==2.13.0
 openrlhf[vllm]==0.11.2
-transformers==5.15.0
+transformers==5.10.1
 pytest==9.1.1
 opentelemetry-exporter-otlp==1.45.1
 protobuf==6.33.6

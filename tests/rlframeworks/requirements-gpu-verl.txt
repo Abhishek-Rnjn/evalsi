@@ -3,7 +3,7 @@
 # The engine's Transformers pin differs from the CPU reward-only fixture.
 vllm==0.24.0
 verl[verl-core]==0.9.1
-transformers==5.9.0
+transformers==5.10.1
 tensordict==0.10.0
 ray[default]==2.59.0
 aiohttp==3.14.5
