@@ -51,7 +51,7 @@ const compare = [
   { metric: "task-success", n: 40, base: 0.925, cand: 0.7, diff: -0.225, lo: -0.378, hi: -0.072, verdict: "REGRESSED" },
   { metric: "tool-call-accuracy.recall", n: 40, base: 0.812, cand: 0.846, diff: 0.034, lo: -0.041, hi: 0.109, verdict: "" },
   { metric: "loop-detection", n: 40, base: 0.875, cand: 0.95, diff: 0.075, lo: 0.006, hi: 0.144, verdict: "improved" },
-  { metric: "policy-violations", n: 40, base: 0.975, cand: 0.975, diff: 0, lo: -0.049, hi: 0.049, verdict: "" },
+  { metric: "policy-violations.policy-clean", n: 40, base: 0.975, cand: 0.975, diff: 0, lo: -0.049, hi: 0.049, verdict: "" },
 ];
 const WIDTH = 21;
 const RANGE = 0.4;
@@ -352,8 +352,8 @@ const extras = [
           </div>
           <pre class="overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.7] text-[#a3a9b8] sm:p-6 sm:text-[13px]"><code><span class="text-teal-300">$</span> <span class="text-[#eef0f5]">evalsi compare baseline.json candidate.json --fail-on-regression</span>
 
-<span class="text-[#7a8296]">metric                     n   baseline  candidate  diff    CI                {"-0.4".padEnd(10)}0{"+0.4".padStart(10)}</span>
-{compare.map((r) => (<Fragment><span class="text-[#eef0f5]">{r.metric.padEnd(27)}</span>{String(r.n).padEnd(4)}{r.base.toFixed(3).padEnd(10)}{r.cand.toFixed(3).padEnd(11)}<span class={tone(r.verdict)}>{signed(r.diff)}</span>  {`[${signed(r.lo).trim()}, ${signed(r.hi).trim()}]`.padEnd(18)}<span aria-hidden="true">{whisker(r).map(([ch, kind]) => <span class={kind === "out" ? "text-white/15" : kind === "zero" ? "text-white/30" : kind === "mid" ? tone(r.verdict) : r.verdict ? tone(r.verdict) : "text-[#7a8296]"}>{ch}</span>)}</span>  <span class={tone(r.verdict)}>{r.verdict}</span>{"\n"}</Fragment>))}
+<span class="text-[#7a8296]">metric                         n   baseline  candidate  diff    CI                {"-0.4".padEnd(10)}0{"+0.4".padStart(10)}</span>
+{compare.map((r) => (<Fragment><span class="text-[#eef0f5]">{r.metric.padEnd(31)}</span>{String(r.n).padEnd(4)}{r.base.toFixed(3).padEnd(10)}{r.cand.toFixed(3).padEnd(11)}<span class={tone(r.verdict)}>{signed(r.diff)}</span>  {`[${signed(r.lo).trim()}, ${signed(r.hi).trim()}]`.padEnd(18)}<span aria-hidden="true">{whisker(r).map(([ch, kind]) => <span class={kind === "out" ? "text-white/15" : kind === "zero" ? "text-white/30" : kind === "mid" ? tone(r.verdict) : r.verdict ? tone(r.verdict) : "text-[#7a8296]"}>{ch}</span>)}</span>  <span class={tone(r.verdict)}>{r.verdict}</span>{"\n"}</Fragment>))}
 <span class="text-teal-300">$</span> <span class="text-[#eef0f5]">echo $?</span>
 <span class="text-[#ff6369]">3</span></code></pre>
           <figcaption class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-white/[.08] bg-[#11141c] px-5 py-3 text-xs text-[#a3a9b8] sm:px-6">
