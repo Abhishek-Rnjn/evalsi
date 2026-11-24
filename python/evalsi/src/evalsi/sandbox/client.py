@@ -19,7 +19,7 @@ import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import grpc
 from google.protobuf import duration_pb2
@@ -295,6 +295,24 @@ def _raise(exc: grpc.aio.AioRpcError) -> None:
     raise SandboxError(f"sandbox service: {exc.code().name}: {detail}") from exc
 
 
+_T = TypeVar("_T")
+
+
+def _reply(resp: _T | None, method: str) -> _T:
+    """``resp``, or a SandboxError when the call returned nothing.
+
+    grpcio returns ``None`` instead of raising when it cannot decode a reply
+    (it logs the decoding error to the ``grpc`` logger, which is silent unless
+    logging is configured). Without this, the caller fails later with an
+    ``AttributeError`` that hides which RPC went wrong."""
+    if resp is None:
+        raise SandboxError(
+            f"sandbox service: {method} returned no response (the reply could not be"
+            " decoded; configure logging to see the grpc logger's error)"
+        )
+    return resp
+
+
 class ReadFilesResult(dict[str, bytes]):
     """Files by path, as :meth:`Sandbox.read_files` returns them, plus what
     was not delivered: ``missing`` paths (absent, or a symlink or special
@@ -410,14 +428,17 @@ class Sandbox:
             stdin=stdin,
         )
         try:
-            resp = await self.client.stub.StartProcess(request)
+            resp = _reply(await self.client.stub.StartProcess(request), "StartProcess")
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return ProcessInfo.from_proto(resp.process)
 
     async def list_processes(self) -> list[ProcessInfo]:
         try:
-            resp = await self.client.stub.ListProcesses(pb.ListProcessesRequest(sandbox_id=self.id))
+            resp = _reply(
+                await self.client.stub.ListProcesses(pb.ListProcessesRequest(sandbox_id=self.id)),
+                "ListProcesses",
+            )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return [ProcessInfo.from_proto(p) for p in resp.processes]
@@ -442,7 +463,7 @@ class Sandbox:
             wait=_duration(wait_s),
         )
         try:
-            resp = await self.client.stub.ReadProcess(request)
+            resp = _reply(await self.client.stub.ReadProcess(request), "ReadProcess")
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return ProcessOutput(
@@ -475,8 +496,11 @@ class Sandbox:
 
     async def kill_process(self, process_id: str) -> ProcessInfo:
         try:
-            resp = await self.client.stub.KillProcess(
-                pb.KillProcessRequest(sandbox_id=self.id, process_id=process_id)
+            resp = _reply(
+                await self.client.stub.KillProcess(
+                    pb.KillProcessRequest(sandbox_id=self.id, process_id=process_id)
+                ),
+                "KillProcess",
             )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
@@ -500,8 +524,11 @@ class Sandbox:
         not read are listed in ``.missing``; ``.truncated`` is set when
         ``max_bytes`` cut the read short."""
         try:
-            resp = await self.client.stub.ReadFiles(
-                pb.ReadFilesRequest(sandbox_id=self.id, paths=list(paths), max_bytes=max_bytes)
+            resp = _reply(
+                await self.client.stub.ReadFiles(
+                    pb.ReadFilesRequest(sandbox_id=self.id, paths=list(paths), max_bytes=max_bytes)
+                ),
+                "ReadFiles",
             )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
@@ -512,14 +539,18 @@ class Sandbox:
 
     async def snapshot(self) -> str:
         try:
-            resp = await self.client.stub.Snapshot(pb.SnapshotRequest(sandbox_id=self.id))
+            resp = _reply(
+                await self.client.stub.Snapshot(pb.SnapshotRequest(sandbox_id=self.id)), "Snapshot"
+            )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return resp.snapshot_id
 
     async def egress(self) -> list[EgressEvent]:
         try:
-            resp = await self.client.stub.Stats(pb.StatsRequest(sandbox_id=self.id))
+            resp = _reply(
+                await self.client.stub.Stats(pb.StatsRequest(sandbox_id=self.id)), "Stats"
+            )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return [
@@ -573,10 +604,13 @@ class SandboxClient:
     async def create(self, spec: SandboxSpec | None = None) -> Sandbox:
         try:
             if spec and spec.services:
-                capabilities = await self.stub.Probe(pb.ProbeRequest())
+                capabilities = _reply(await self.stub.Probe(pb.ProbeRequest()), "Probe")
                 if not capabilities.services_supported:
                     raise SandboxUnavailable("sandbox server does not support services; upgrade it")
-            resp = await self.stub.Create(pb.CreateRequest(spec=(spec or SandboxSpec()).to_proto()))
+            resp = _reply(
+                await self.stub.Create(pb.CreateRequest(spec=(spec or SandboxSpec()).to_proto())),
+                "Create",
+            )
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         sandbox = Sandbox(self, resp.sandbox_id, Isolation.from_proto(resp.isolation))
@@ -595,7 +629,7 @@ class SandboxClient:
                 pb.NetworkPolicy(mode=_NETWORK[network], allow=list(allow_hosts))
             )
         try:
-            resp = await self.stub.Restore(request)
+            resp = _reply(await self.stub.Restore(request), "Restore")
         except grpc.aio.AioRpcError as exc:
             _raise(exc)
         return Sandbox(self, resp.sandbox_id, Isolation.from_proto(resp.isolation))
@@ -605,7 +639,7 @@ class SandboxClient:
             await self.stub.DeleteSnapshot(pb.DeleteSnapshotRequest(snapshot_id=snapshot_id))
 
     async def probe(self) -> list[dict[str, Any]]:
-        resp = await self.stub.Probe(pb.ProbeRequest())
+        resp = _reply(await self.stub.Probe(pb.ProbeRequest()), "Probe")
         return [
             {
                 "driver": r.driver,
