@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Fixed
+
+- A sandbox call whose reply the client could not decode raised `AttributeError: 'NoneType' object has no attribute ...` from deep inside a run (seen once in CI as `snapshot_id`). The sandbox client now raises `SandboxError` naming the call, for example `sandbox service: Snapshot returned no response`.
+
 ## [0.4.0] - 2026-11-14
 
 **The project is renamed Evalsi** ([decision 0039](docs/decisions/0039-one-name-evalsi.md)). The Kubernetes API group is `evalsi.dev`, so spec files say `apiVersion: evalsi.dev/v1alpha1`; labels and annotations use the `evalsi.dev/` prefix (`evalsi.dev/project`); the CRDs are `evalruns.evalsi.dev` and so on; the default token audience is `evalsi.dev`; the repository is `Abhishek-Rnjn/evalsi` and the Go module `github.com/abhishek-rnjn/evalsi`. There is no compatibility path for `evals.si/v1alpha1`: no release had been installed.
