@@ -34,9 +34,8 @@ echo "exit code: $?"
 ```text
 2 records
 
-metric                   n  mean   95% CI          skipped  errors
-task-success             2  1.000  [0.342, 1.000]        0       0
-task-success.task-score  0  -      -                     0       0
+metric        n  mean   95% CI          skipped  errors
+task-success  2  1.000  [0.342, 1.000]        0       0
 
 gates:
   [pass] task-success mean min 1.0
@@ -81,9 +80,8 @@ echo "exit code: $?"
 ```text
 2 records
 
-metric                   n  mean   95% CI          skipped  errors
-task-success             2  0.000  [0.000, 0.658]        0       0
-task-success.task-score  0  -      -                     0       0
+metric        n  mean   95% CI          skipped  errors
+task-success  2  0.000  [0.000, 0.658]        0       0
 
 gates:
   [FAIL] task-success mean min 1.0 (mean 0 is below 1)

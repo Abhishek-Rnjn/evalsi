@@ -118,9 +118,10 @@ Judge responses are cached by content hash, so re-running an unchanged evaluatio
 
 ```python
 import evalsi
-from evalsi import Record, Score, evaluator
+from evalsi import MetricSpec, Record, Score, ScoreType, evaluator
 
-@evaluator(name="acme/polite", version="1.0.0")
+@evaluator(name="acme/polite", version="1.0.0",
+           outputs=[MetricSpec("polite", ScoreType.PASSED, higher_is_better=True)])
 def polite(record: Record) -> Score:
     return Score(passed="please" in record.output.as_text().lower())
 

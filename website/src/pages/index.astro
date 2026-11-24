@@ -66,16 +66,20 @@ const tone = (v: string) => (v === "REGRESSED" ? "text-[#ff6369]" : v === "impro
 
 const tabs = [
   { label: "Agent gate", lang: "yaml", code: `# evalsi run -f agent-gate.yaml    exit 0 passes, exit 3 fails the build
-target:
-  agent:
-    cli: {command: [my-agent, --task, "{instruction}"]}
-dataset: {path: tasks.jsonl}
-environment:
-  checker: {command: [pytest, -q, hidden_tests]}   # the agent never sees it
-evaluators: [{ref: task-success}, {ref: policy-violations}]
-trials: 3
-gates:
-  - {metric: task-success.pass^3, min: 0.8}        # 3 passes in a row, on 80% of tasks` },
+apiVersion: evalsi.dev/v1alpha1
+kind: EvalRun
+metadata: {name: agent-gate}
+spec:
+  target:
+    agent:
+      cli: {command: [my-agent, --task, "{instruction}"]}
+  dataset: {path: tasks.jsonl}
+  environment:
+    checker: {command: [pytest, -q, hidden_tests]}   # the agent never sees it
+  evaluators: [{ref: task-success}, {ref: policy-violations}]
+  trials: 3
+  gates:
+    - {metric: task-success.pass^3, min: 0.8}        # 3 passes in a row, on 80% of tasks` },
   { label: "Release decision", lang: "bash", code: `# Can we safely ship this change? exit 0 PASS, 3 BLOCK, 1 INSUFFICIENT
 evalsi release policy-hash -f release-policy.yaml      # review, then pin it
 evalsi release gate -f release-policy.yaml --policy-sha256 "$POLICY_SHA256" \\
@@ -117,9 +121,10 @@ pip install 'evalsi[anthropic]'
 evalsi eval --data qa.jsonl --evaluators llm-judge \\
   --judge-provider anthropic --judge-model claude-opus-5-5` },
   { label: "Python", lang: "python", code: `import evalsi
-from evalsi import Record, Score, evaluator
+from evalsi import MetricSpec, Record, Score, ScoreType, evaluator
 
-@evaluator(name="acme/polite", version="1.0.0")
+@evaluator(name="acme/polite", version="1.0.0",
+           outputs=[MetricSpec("polite", ScoreType.PASSED, higher_is_better=True)])
 def polite(record: Record) -> Score:
     return Score(passed="please" in record.output.as_text().lower())
 
@@ -229,31 +234,35 @@ const harnessCaps = [
 ];
 
 const harnessSpec = `# pip install evalsi-harness; evalsi run -f agent-run.yaml
-target: {connector: anthropic, model: claude-opus-5-5}
-dataset: {path: fix-calc.jsonl}
-harness:
-  builtin:
-    profile: standard
-    max_steps: 20
-    budget: {usd: 0.50, wall_clock: 5m}
-    hooks:
-      - python: evalsi_harness.approval:ApprovalGate
-        config:
-          rules: [{tool: bash, command: "git push*", action: ask}]
-          approver: {default: deny}
-environment:
-  sandbox: {min_isolation: namespaced, network: deny}
-  checker:                       # the agent never sees it
-    files: {test_hidden.py: "..."}
-    isolation: clean             # a fresh sandbox, outputs only
-    outputs: [calc.py]
-    command: [python3, test_hidden.py]
-evaluators:
-  - {ref: task-success}
-  - {ref: denial-respected}
-  - {ref: trial-tampering}
-trials: 3
-gates: [{metric: task-success.pass^3, min: 0.5}]`;
+apiVersion: evalsi.dev/v1alpha1
+kind: EvalRun
+metadata: {name: fix-calc}
+spec:
+  target: {connector: anthropic, model: claude-opus-5-5}
+  dataset: {path: fix-calc.jsonl}
+  harness:
+    builtin:
+      profile: standard
+      max_steps: 20
+      budget: {usd: 0.50, wall_clock: 5m}
+      hooks:
+        - python: evalsi_harness.approval:ApprovalGate
+          config:
+            rules: [{tool: bash, command: "git push*", action: ask}]
+            approver: {default: deny}
+  environment:
+    sandbox: {min_isolation: namespaced, network: deny}
+    checker:                       # the agent never sees it
+      files: {test_hidden.py: "..."}
+      isolation: clean             # a fresh sandbox, outputs only
+      outputs: [calc.py]
+      command: [python3, test_hidden.py]
+  evaluators:
+    - {ref: task-success}
+    - {ref: denial-respected}
+    - {ref: trial-tampering}
+  trials: 3
+  gates: [{metric: task-success.pass^3, min: 0.5}]`;
 
 const extras = [
   { name: "Trace sources", text: "Score traces kept in MLflow, Phoenix or Langfuse, and write scores back", href: "/docs/guides/trace-sources/" },
