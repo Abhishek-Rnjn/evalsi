@@ -1,5 +1,4 @@
 import { Activity, Gauge, Play, Trophy } from "lucide-react";
-import { MagicCard } from "./ui/magic-card";
 
 export default function Doors({ base }: { base: string }) {
   const doors = [
@@ -11,18 +10,14 @@ export default function Doors({ base }: { base: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {doors.map(({ Icon, ...d }) => (
-        <MagicCard key={d.name} href={d.href}>
-          <div className="flex h-full flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/15 to-teal-400/15 ring-1 ring-indigo-500/20">
-                <Icon className="size-5 text-indigo-500 dark:text-indigo-300" />
-              </span>
-              <code className="rounded-md bg-neutral-100 px-2 py-0.5 font-mono text-[11px] text-neutral-500 dark:bg-white/5 dark:text-neutral-400">{d.tag}</code>
-            </div>
-            <h3 className="text-lg font-semibold">{d.name}</h3>
-            <p className="text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">{d.text}</p>
+        <a key={d.name} href={d.href} className="flex h-full flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-6 transition-colors hover:border-gray-400 dark:border-white/10 dark:bg-white/[.02]">
+          <div className="flex items-center justify-between">
+            <Icon className="size-[18px] text-gray-500" strokeWidth={1.5} />
+            <code className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-500 dark:bg-white/5 dark:text-gray-400">{d.tag}</code>
           </div>
-        </MagicCard>
+          <h3 className="text-lg font-semibold">{d.name}</h3>
+          <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">{d.text}</p>
+        </a>
       ))}
     </div>
   );

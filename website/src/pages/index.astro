@@ -4,11 +4,6 @@ import logoSvg from "../assets/logo.svg?raw";
 const logo = logoSvg.replace(/fill="#111322"/g, "fill=\"currentColor\"");
 import { ArrowRight, BookOpen } from "lucide-react";
 import GithubIcon from "../components/GithubIcon.astro";
-import { AnimatedGradientText } from "../components/ui/animated-gradient-text";
-import { AnimatedBadge } from "../components/ui/animated-badge";
-import { RainbowButton } from "../components/ui/rainbow-button";
-import { BorderBeam } from "../components/ui/border-beam";
-import { Marquee } from "../components/ui/marquee";
 import Doors from "../components/Doors";
 import Features from "../components/Features";
 import ArchitectureBeams from "../components/ArchitectureBeams";
@@ -48,6 +43,26 @@ const ecosystem = [
   "PostgreSQL", "ClickHouse", "S3", "Firecracker", "TRL", "verl", "OpenRLHF", "MCP", "A2A",
   "vLLM", "SGLang", "Ollama",
 ];
+
+// The hero's product view: `evalsi compare --fail-on-regression` on a
+// baseline and a candidate (illustrative numbers, real output format). Each
+// paired difference is also drawn as a whisker around zero over [-0.4, 0.4].
+const compare = [
+  { metric: "task-success", n: 40, base: 0.925, cand: 0.7, diff: -0.225, lo: -0.378, hi: -0.072, verdict: "REGRESSED" },
+  { metric: "tool-call-accuracy.recall", n: 40, base: 0.812, cand: 0.846, diff: 0.034, lo: -0.041, hi: 0.109, verdict: "" },
+  { metric: "loop-detection", n: 40, base: 0.875, cand: 0.95, diff: 0.075, lo: 0.006, hi: 0.144, verdict: "improved" },
+  { metric: "policy-violations.policy-clean", n: 40, base: 0.975, cand: 0.975, diff: 0, lo: -0.049, hi: 0.049, verdict: "" },
+];
+const WIDTH = 21;
+const RANGE = 0.4;
+const signed = (v: number) => (v > 0 ? "+" : v < 0 ? "-" : " ") + Math.abs(v).toFixed(3);
+const whisker = (r: { diff: number; lo: number; hi: number }) => {
+  const at = (v: number) => Math.round(((Math.max(-RANGE, Math.min(RANGE, v)) + RANGE) / (2 * RANGE)) * (WIDTH - 1));
+  const [lo, hi, mid, zero] = [at(r.lo), at(r.hi), at(r.diff), at(0)];
+  return Array.from({ length: WIDTH }, (_, i): [string, string] =>
+    i === mid ? ["●", "mid"] : i === lo || i === hi ? ["│", "in"] : i > lo && i < hi ? ["─", "in"] : i === zero ? ["┊", "zero"] : ["·", "out"]);
+};
+const tone = (v: string) => (v === "REGRESSED" ? "text-[#ff6369]" : v === "improved" ? "text-teal-300" : "text-[#a3a9b8]");
 
 const tabs = [
   { label: "Agent gate", lang: "yaml", code: `# evalsi run -f agent-gate.yaml    exit 0 passes, exit 3 fails the build
@@ -281,19 +296,19 @@ const extras = [
   <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body class="font-sans">
   <!-- Nav -->
-  <header class="sticky top-0 z-50 border-b border-neutral-200/60 bg-white/70 backdrop-blur-xl dark:border-white/5 dark:bg-[#05060d]/70">
+  <header class="sticky top-0 z-50 border-b border-gray-200/60 bg-white/90 backdrop-blur dark:border-white/5 dark:bg-[#05060d]/70">
     <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
       <a href={`${base}/`} aria-label="Evalsi home" class="[&>svg]:h-8 [&>svg]:w-auto" set:html={logo} />
-      <nav class="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400">
-        <a class="hidden rounded-lg px-3 py-2 hover:text-neutral-900 sm:block dark:hover:text-white" href={doc("/docs/get-started/")}>Docs</a>
-        <a class="hidden rounded-lg px-3 py-2 hover:text-neutral-900 sm:block dark:hover:text-white" href={doc("/examples/")}>Examples</a>
-        <a class="hidden rounded-lg px-3 py-2 hover:text-neutral-900 md:block dark:hover:text-white" href={`${base}/#harness`}>Harness</a>
-        <a class="hidden rounded-lg px-3 py-2 hover:text-neutral-900 md:block dark:hover:text-white" href={doc("/integrations/")}>Integrations</a>
-        <a href={repo} class="ml-1 inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-1.5 font-medium text-neutral-900 transition-colors hover:border-indigo-400 dark:border-white/10 dark:text-white">
+      <nav class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+        <a class="hidden rounded-lg px-3 py-2 hover:text-gray-900 sm:block dark:hover:text-white" href={doc("/docs/get-started/")}>Docs</a>
+        <a class="hidden rounded-lg px-3 py-2 hover:text-gray-900 sm:block dark:hover:text-white" href={doc("/examples/")}>Examples</a>
+        <a class="hidden rounded-lg px-3 py-2 hover:text-gray-900 md:block dark:hover:text-white" href={`${base}/#harness`}>Harness</a>
+        <a class="hidden rounded-lg px-3 py-2 hover:text-gray-900 md:block dark:hover:text-white" href={doc("/integrations/")}>Integrations</a>
+        <a href={repo} class="ml-1 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-900 transition-colors hover:border-gray-400 dark:border-white/10 dark:text-white">
           <GithubIcon /> GitHub
         </a>
       </nav>
@@ -302,111 +317,105 @@ const extras = [
 
   <main class="overflow-x-clip">
     <!-- Hero -->
-    <section class="relative">
-      <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8881_1px,transparent_1px),linear-gradient(to_bottom,#8881_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_40%,transparent_100%)]"></div>
-      <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-[-12rem] -z-10 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(99,102,241,0.35),rgba(45,212,191,0.12),transparent)] blur-2xl"></div>
-
-      <div class="mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:px-6 sm:pt-24">
-        <a href={doc("/docs/guides/onboarding/")} class="animate-fade-up inline-block">
-          <AnimatedGradientText>
-            <AnimatedBadge text="New" className="mr-2 hidden shrink-0 sm:inline-block" />
-            <span class="inline animate-gradient bg-gradient-to-r from-[#818cf8] via-[#2dd4bf] to-[#818cf8] bg-[length:var(--bg-size)_100%] bg-clip-text text-xs text-transparent sm:text-sm">New in 0.4.0: coverage gates, local compare, pytest gates</span>
-            <ArrowRight className="ml-1 size-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
-          </AnimatedGradientText>
-        </a>
-
-        <h1 class="animate-fade-up mx-auto mt-8 max-w-4xl text-balance text-4xl font-extrabold tracking-tight [animation-delay:80ms] sm:text-6xl">
-          Evaluate{" "}
-          <span class="bg-gradient-to-r from-indigo-500 via-violet-400 to-teal-400 bg-clip-text text-transparent">AI</span>{" "}
-          before you ship, while it runs, and as you train it.
-        </h1>
-        <p class="animate-fade-up mx-auto mt-6 max-w-2xl text-pretty text-lg text-neutral-600 [animation-delay:160ms] sm:text-xl dark:text-neutral-400">
-          Answer one question for every change: can we safely ship it? Agents, RAG pipelines, LLMs and models on one set of evaluators, with sandboxed runs and CI gates, live trace scoring, release decisions and RL rewards. Built first for agents. Self-hosted, from a laptop to Kubernetes.
-        </p>
-        <div class="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-4 [animation-delay:240ms]">
-          <RainbowButton href={doc("/docs/get-started/")}>Get started <ArrowRight className="size-4" /></RainbowButton>
-          <a href={repo} class="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-200 bg-white/60 px-6 font-medium backdrop-blur transition-colors hover:border-indigo-400 dark:border-white/10 dark:bg-white/5">
-            <GithubIcon /> Star on GitHub
+    <section class="bg-[#f5f7fa] dark:bg-transparent">
+      <div class="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
+        <div class="max-w-4xl">
+          <a href={doc("/docs/guides/onboarding/")} class="animate-fade-up group inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
+            <span class="font-mono text-teal-700">0.4.0</span>
+            <span>Coverage gates, local compare and pytest gates</span>
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
           </a>
-        </div>
-        <p class="animate-fade-up mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-neutral-500 [animation-delay:280ms]">
-          <code class="rounded-md border border-neutral-200 bg-white/60 px-2 py-1 font-mono text-[13px] text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300">pip install evalsi</code>
-          <a class="underline-offset-4 hover:text-neutral-900 hover:underline dark:hover:text-white" href={`${repo}/releases/latest`}>Latest release</a>
-          <a class="underline-offset-4 hover:text-neutral-900 hover:underline dark:hover:text-white" href={doc("/docs/changelog/")}>Changelog</a>
-        </p>
-
-        <!-- Terminal -->
-        <div class="animate-fade-up relative mx-auto mt-16 max-w-3xl [animation-delay:320ms]">
-          <div aria-hidden="true" class="absolute -inset-x-10 -bottom-10 top-10 -z-10 rounded-[3rem] bg-gradient-to-r from-indigo-500/30 to-teal-400/30 blur-3xl"></div>
-          <div class="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white/90 text-left shadow-2xl shadow-indigo-500/10 backdrop-blur">
-            <div class="flex items-center gap-2 border-b border-neutral-200 bg-neutral-50/80 px-4 py-3">
-              <span class="size-3 rounded-full bg-[#ff5f57]"></span><span class="size-3 rounded-full bg-[#febc2e]"></span><span class="size-3 rounded-full bg-[#28c840]"></span>
-              <span class="ml-3 font-mono text-xs text-neutral-500">evalsi eval</span>
-            </div>
-            <pre class="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed text-neutral-700 sm:text-[13.5px]"><code><span class="text-teal-600">$</span> evalsi eval --data agent-runs.jsonl --evaluators tool-call-accuracy,tool-errors,loop-detection
-
-<span class="text-neutral-400">2 records · 3 evaluators</span>
-
-<span class="text-neutral-400">metric                        n  mean   95% CI          skipped  errors</span>
-tool-call-accuracy.recall     2  <span class="text-indigo-600 font-medium">0.750</span>  [0.000, 1.000]        0       0
-tool-call-accuracy.precision  2  <span class="text-indigo-600 font-medium">0.667</span>  [0.000, 1.000]        0       0
-tool-errors                   2  <span class="text-indigo-600 font-medium">0.500</span>  [0.000, 1.000]        0       0
-loop-detection                2  <span class="text-amber-600 font-medium">0.500</span>  [0.095, 0.905]        0       0</code></pre>
-            <BorderBeam size={250} duration={10} />
+          <h1 class="animate-fade-up mt-6 text-balance text-4xl font-semibold leading-[1.06] tracking-[-0.03em] [animation-delay:60ms] sm:text-6xl">
+            Evaluate AI before you ship, while it runs, and as you train it
+          </h1>
+          <p class="animate-fade-up mt-6 max-w-2xl text-pretty text-lg leading-8 text-gray-600 [animation-delay:120ms] dark:text-gray-400">
+            Answer one question for every change: can we safely ship it? Agents, RAG pipelines, LLMs and models on one set of evaluators, with sandboxed runs and CI gates, live trace scoring, release decisions and RL rewards. Built first for agents. Self-hosted, from a laptop to Kubernetes.
+          </p>
+          <div class="animate-fade-up mt-8 flex flex-wrap items-center gap-3 [animation-delay:180ms]">
+            <a href={doc("/docs/get-started/")} class="group inline-flex h-11 items-center gap-2 rounded-lg bg-gray-900 px-5 font-medium text-white transition-colors hover:bg-gray-800 active:scale-[0.98]">Get started <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
+            <a href={repo} class="inline-flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 font-medium transition-colors hover:border-gray-400 active:scale-[0.98] dark:border-white/10 dark:bg-white/5">
+              <GithubIcon /> Star on GitHub
+            </a>
           </div>
+          <p class="animate-fade-up mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 [animation-delay:180ms]">
+            <code class="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 font-mono text-[13px] text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">pip install evalsi</code>
+            <a class="underline-offset-4 hover:text-gray-900 hover:underline dark:hover:text-white" href={`${repo}/releases/latest`}>Latest release</a>
+            <a class="underline-offset-4 hover:text-gray-900 hover:underline dark:hover:text-white" href={doc("/docs/changelog/")}>Changelog</a>
+          </p>
         </div>
+
+        <!-- Product view: the release decision the page is about -->
+        <figure class="animate-fade-up mt-16 overflow-hidden rounded-2xl border border-black/10 bg-[#0b0d14] text-left shadow-[0_24px_48px_-12px_rgba(11,13,20,0.35)] [animation-delay:240ms]">
+          <div class="flex items-center gap-2 border-b border-white/[.08] bg-[#11141c] px-4 py-3">
+            <span class="size-2.5 rounded-full bg-white/15"></span><span class="size-2.5 rounded-full bg-white/15"></span><span class="size-2.5 rounded-full bg-white/15"></span>
+            <span class="ml-2 font-mono text-xs text-[#7a8296]">ci · pull request #418</span>
+          </div>
+          <pre class="overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.7] text-[#a3a9b8] sm:p-6 sm:text-[13px]"><code><span class="text-teal-300">$</span> <span class="text-[#eef0f5]">evalsi compare baseline.json candidate.json --fail-on-regression</span>
+
+<span class="text-[#7a8296]">metric                         n   baseline  candidate  diff    CI                {"-0.4".padEnd(10)}0{"+0.4".padStart(10)}</span>
+{compare.map((r) => (<Fragment><span class="text-[#eef0f5]">{r.metric.padEnd(31)}</span>{String(r.n).padEnd(4)}{r.base.toFixed(3).padEnd(10)}{r.cand.toFixed(3).padEnd(11)}<span class={tone(r.verdict)}>{signed(r.diff)}</span>  {`[${signed(r.lo).trim()}, ${signed(r.hi).trim()}]`.padEnd(18)}<span aria-hidden="true">{whisker(r).map(([ch, kind]) => <span class={kind === "out" ? "text-white/15" : kind === "zero" ? "text-white/30" : kind === "mid" ? tone(r.verdict) : r.verdict ? tone(r.verdict) : "text-[#7a8296]"}>{ch}</span>)}</span>  <span class={tone(r.verdict)}>{r.verdict}</span>{"\n"}</Fragment>))}
+<span class="text-teal-300">$</span> <span class="text-[#eef0f5]">echo $?</span>
+<span class="text-[#ff6369]">3</span></code></pre>
+          <figcaption class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-white/[.08] bg-[#11141c] px-5 py-3 text-xs text-[#a3a9b8] sm:px-6">
+            <span class="rounded bg-[#ff6369]/15 px-1.5 py-0.5 font-mono text-[#ff6369]">exit 3</span>
+            <span>task-success fell by 0.225, and its whole 95% interval is below zero, so the build stops. Improvements inside the noise are not called out.</span>
+          </figcaption>
+        </figure>
       </div>
     </section>
 
-    <!-- Ecosystem marquee -->
-    <section class="border-y border-neutral-200/70 py-8 dark:border-white/5">
-      <p class="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Works with the tools you already use</p>
-      <div class="relative">
-        <Marquee pauseOnHover className="[--duration:50s]">
-          {ecosystem.map((e) => (
-            <span class="whitespace-nowrap rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm text-neutral-600 dark:border-white/10 dark:bg-white/[.03] dark:text-neutral-300">{e}</span>
-          ))}
-        </Marquee>
-        <div class="pointer-events-none absolute inset-y-0 left-0 w-1/5 bg-gradient-to-r from-white dark:from-[#05060d]"></div>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-1/5 bg-gradient-to-l from-white dark:from-[#05060d]"></div>
+    <!-- Ecosystem -->
+    <section class="border-b border-gray-200/70 py-10 dark:border-white/5">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+        <p class="text-sm text-gray-500">Works with the tools you already use</p>
+        <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
+          {ecosystem.map((e) => <li>{e}</li>)}
+        </ul>
       </div>
     </section>
 
     <!-- Position -->
     <section class="mx-auto max-w-6xl px-4 pt-24 sm:px-6">
       <div class="mx-auto mb-12 max-w-3xl text-center">
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">One decision, every change</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Can we safely ship this agent change?</h2>
-        <p class="mt-4 text-neutral-600 dark:text-neutral-400">Connect the agent and trace store you already use. Turn real failures into reproducible tests. Get a reviewable release decision for every change, with the evidence behind it.</p>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">One decision, every change</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Can we safely ship this agent change?</h2>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Connect the agent and trace store you already use. Turn real failures into reproducible tests. Get a reviewable release decision for every change, with the evidence behind it.</p>
       </div>
       <ol class="grid gap-4 lg:grid-cols-3">
         {workflow.map((w) => (
           <li>
-            <a href={doc(w.href)} class="group flex h-full flex-col rounded-2xl border border-neutral-200 p-6 transition-colors hover:border-indigo-400 dark:border-white/10">
-              <span class="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 font-mono text-sm font-semibold text-white">{w.step}</span>
-              <h3 class="mt-4 flex items-center justify-between text-lg font-semibold">{w.name}<ArrowRight className="size-4 text-neutral-400 transition-transform group-hover:translate-x-1" /></h3>
-              <p class="mt-2 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">{w.text}</p>
+            <a href={doc(w.href)} class="group flex h-full flex-col rounded-2xl border border-gray-200 p-6 transition-colors hover:border-gray-400 dark:border-white/10">
+              <span class="flex size-8 items-center justify-center rounded-lg border border-gray-200 font-mono text-sm text-gray-500 dark:border-white/10">{w.step}</span>
+              <h3 class="mt-4 flex items-center justify-between text-lg font-semibold">{w.name}<ArrowRight className="size-4 text-gray-400 transition-transform group-hover:translate-x-1" /></h3>
+              <p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{w.text}</p>
+              {w.step === "3" && (
+                <p class="mt-auto flex gap-2 pt-5 font-mono text-xs">
+                  <span class="rounded bg-teal-700/10 px-1.5 py-0.5 text-teal-800">PASS</span>
+                  <span class="rounded bg-red-600/10 px-1.5 py-0.5 text-red-700">BLOCK</span>
+                  <span class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">INSUFFICIENT</span>
+                </p>
+              )}
             </a>
           </li>
         ))}
       </ol>
       <div class="mt-4 grid gap-4 md:grid-cols-3">
         {audiences.map((a) => (
-          <div class="rounded-2xl bg-neutral-50 p-5 dark:bg-white/[.03]">
+          <div class="rounded-2xl bg-gray-50 p-5 dark:bg-white/[.03]">
             <h3 class="text-sm font-semibold">{a.name}</h3>
-            <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{a.text}</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{a.text}</p>
           </div>
         ))}
       </div>
-      <p class="mt-6 text-center text-sm text-neutral-500"><a class="font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300" href={doc("/docs/guides/gate-an-agent-in-ci/")}>Gate an agent in CI</a>: a failing gate and a GitHub Actions workflow, free and offline. Or <a class="font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300" href={doc("/docs/guides/onboarding/")}>start from your own application</a>.</p>
+      <p class="mt-6 text-center text-sm text-gray-500"><a class="font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-300" href={doc("/docs/guides/gate-an-agent-in-ci/")}>Gate an agent in CI</a>: a failing gate and a GitHub Actions workflow, free and offline. Or <a class="font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-300" href={doc("/docs/guides/onboarding/")}>start from your own application</a>.</p>
     </section>
 
     <!-- Doors -->
     <section class="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div class="mx-auto mb-12 max-w-2xl text-center">
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">Four doors, one platform</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Run it, watch it, score it, reward it</h2>
-        <p class="mt-4 text-neutral-600 dark:text-neutral-400">The same evaluators work in every mode, so a metric means the same thing in CI, in production and in training.</p>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">Four doors, one platform</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Run it, watch it, score it, reward it</h2>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">The same evaluators work in every mode, so a metric means the same thing in CI, in production and in training.</p>
       </div>
       <Doors base={base} client:visible />
     </section>
@@ -414,15 +423,15 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
     <!-- What's new -->
     <section class="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
       <div class="mx-auto mb-12 max-w-2xl text-center">
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">New in 0.4.0</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Gates that catch missing evidence, and a faster first result</h2>
-        <p class="mt-4 text-neutral-600 dark:text-neutral-400">Upgrade with <code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-sm dark:bg-white/10">pip install -U evalsi evalsi-harness</code>, and the server and charts to the same version. Everything else that changed is in the <a class="font-medium text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300" href={doc("/docs/changelog/")}>changelog</a>.</p>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">New in 0.4.0</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Gates that catch missing evidence, and a faster first result</h2>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Upgrade with <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm dark:bg-white/10">pip install -U evalsi evalsi-harness</code>, and the server and charts to the same version. Everything else that changed is in the <a class="font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-300" href={doc("/docs/changelog/")}>changelog</a>.</p>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {whatsNew.map((n) => (
-          <a href={doc(n.href)} class="group rounded-2xl border border-neutral-200 p-5 transition-colors hover:border-indigo-400 dark:border-white/10">
-            <h3 class="flex items-center justify-between font-semibold">{n.name}<ArrowRight className="size-4 text-neutral-400 transition-transform group-hover:translate-x-1" /></h3>
-            <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{n.text}</p>
+          <a href={doc(n.href)} class="group rounded-2xl border border-gray-200 p-5 transition-colors hover:border-gray-400 dark:border-white/10">
+            <h3 class="flex items-center justify-between font-semibold">{n.name}<ArrowRight className="size-4 text-gray-400 transition-transform group-hover:translate-x-1" /></h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{n.text}</p>
           </a>
         ))}
       </div>
@@ -431,26 +440,26 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
     <!-- Tracks -->
     <section class="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
       <div class="mx-auto mb-12 max-w-2xl text-center">
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">Built for what you are building</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Agents, RAG and training</h2>
-        <p class="mt-4 text-neutral-600 dark:text-neutral-400">Agents come first because that is where evaluation is hardest. RAG and training are first-class too, and every track uses the same evaluators.</p>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">Built for what you are building</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Agents, RAG and training</h2>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Agents come first because that is where evaluation is hardest. RAG and training are first-class too, and every track uses the same evaluators.</p>
       </div>
       <div class="grid gap-4 lg:grid-cols-3">
         {tracks.map((t) => (
-          <div class="flex flex-col rounded-2xl border border-neutral-200 p-6 dark:border-white/10">
+          <div class="flex flex-col rounded-2xl border border-gray-200 p-6 dark:border-white/10">
             <div class="flex items-center justify-between">
               <h3 class="text-xl font-semibold">{t.name}</h3>
-              {t.badge && <span class="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-300">{t.badge}</span>}
+              {t.badge && <span class="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-white/10 dark:text-gray-300">{t.badge}</span>}
             </div>
-            <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{t.text}</p>
-            <ul class="mt-4 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{t.text}</p>
+            <ul class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
               {t.points.map((p) => (
-                <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-400"></span>{p}</li>
+                <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300"></span>{p}</li>
               ))}
             </ul>
-            <div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+            <div class="mt-6 flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-medium text-teal-700 dark:text-teal-300">
               {t.links.map((l) => (
-                <a href={doc(l.href)} class="inline-flex items-center gap-1 transition-all hover:gap-2">{l.label} <ArrowRight className="size-4" /></a>
+                <a href={doc(l.href)} class="group inline-flex items-center gap-1">{l.label} <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
               ))}
             </div>
           </div>
@@ -459,55 +468,54 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
     </section>
 
     <!-- Harness -->
-    <section id="harness" class="relative mt-24 border-y border-neutral-200/70 bg-gradient-to-b from-indigo-500/[.03] to-teal-400/[.03] py-24 dark:border-white/5">
+    <section id="harness" class="relative mt-24 border-y border-gray-200/70 bg-gray-50 py-24 dark:border-white/5">
       <div class="mx-auto max-w-6xl px-4 sm:px-6">
         <div class="grid items-start gap-12 lg:grid-cols-[1fr_1.1fr]">
           <div>
-            <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">evalsi-harness</p>
-            <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">A built-in agent harness, made for evaluation</h2>
-            <p class="mt-4 text-neutral-600 dark:text-neutral-400">The harness runs an agent on a task in a sandbox, records every model call and tool result, and grades the final state with a checker the agent never sees. Use it to measure a model on a known, versioned agent, or to put your own agent through the same tasks, trials and gates. The tasks double as RL environments.</p>
-            <p class="mt-4 text-neutral-600 dark:text-neutral-400">It is built for evaluation, not for serving agents to users. Bring an agent that serves users over A2A or HTTP, and Evalsi evaluates it.</p>
+            <p class="text-sm font-medium text-teal-700 dark:text-teal-300">evalsi-harness</p>
+            <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">A built-in agent harness, made for evaluation</h2>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">The harness runs an agent on a task in a sandbox, records every model call and tool result, and grades the final state with a checker the agent never sees. Use it to measure a model on a known, versioned agent, or to put your own agent through the same tasks, trials and gates. The tasks double as RL environments.</p>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">It is built for evaluation, not for serving agents to users. Bring an agent that serves users over A2A or HTTP, and Evalsi evaluates it.</p>
             <p class="mt-6 flex flex-wrap items-center gap-3 text-sm">
-              <code class="rounded-md border border-neutral-200 bg-white/60 px-2 py-1 font-mono text-[13px] text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300">pip install evalsi-harness</code>
-              <a class="text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline dark:hover:text-white" href="https://pypi.org/project/evalsi-harness/">PyPI</a>
+              <code class="rounded-md border border-gray-200 bg-white/60 px-2 py-1 font-mono text-[13px] text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">pip install evalsi-harness</code>
+              <a class="text-gray-500 underline-offset-4 hover:text-gray-900 hover:underline dark:hover:text-white" href="https://pypi.org/project/evalsi-harness/">PyPI</a>
             </p>
-            <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-              <a href={doc("/docs/guides/built-in-harness/")} class="inline-flex items-center gap-1 transition-all hover:gap-2">What the harness provides <ArrowRight className="size-4" /></a>
-              <a href={doc("/docs/guides/agent-runs/")} class="inline-flex items-center gap-1 transition-all hover:gap-2">Agent runs guide <ArrowRight className="size-4" /></a>
-              <a href={`${repo}/blob/main/docs/HARNESS-ROADMAP.md`} class="inline-flex items-center gap-1 transition-all hover:gap-2">Harness roadmap <ArrowRight className="size-4" /></a>
+            <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-teal-700 dark:text-teal-300">
+              <a href={doc("/docs/guides/built-in-harness/")} class="group inline-flex items-center gap-1">What the harness provides <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
+              <a href={doc("/docs/guides/agent-runs/")} class="group inline-flex items-center gap-1">Agent runs guide <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
+              <a href={`${repo}/blob/main/docs/HARNESS-ROADMAP.md`} class="group inline-flex items-center gap-1">Harness roadmap <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
             </div>
           </div>
           <CodeTabs tabs={[{ label: "agent-run.yaml", lang: "yaml", code: harnessSpec }]} client:visible />
         </div>
         <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {harnessCaps.map((c) => (
-            <div class="rounded-2xl border border-neutral-200 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[.02]">
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/[.02]">
               <h3 class="font-semibold">{c.name}</h3>
-              <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{c.text}</p>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{c.text}</p>
             </div>
           ))}
         </div>
-        <p class="mx-auto mt-8 max-w-3xl text-center text-sm text-neutral-500">Not built yet, and proposed on the harness roadmap: a model or human approver and an agent that asks for approval on its own, nested and parallel multi-agent topologies, and conversation-level scoring.</p>
+        <p class="mx-auto mt-8 max-w-3xl text-center text-sm text-gray-500">Not built yet, and proposed on the harness roadmap: a model or human approver and an agent that asks for approval on its own, nested and parallel multi-agent topologies, and conversation-level scoring.</p>
       </div>
     </section>
 
     <!-- Architecture -->
     <section class="relative py-24">
-      <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-indigo-500/[.04] to-transparent"></div>
       <div class="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.3fr]">
         <div>
-          <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">Fits your stack</p>
-          <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Plug in at either end</h2>
-          <p class="mt-4 text-neutral-600 dark:text-neutral-400">Send traces from any OpenTelemetry source or gateway, or read them from the MLflow, Phoenix or Langfuse you already run, point runs at your own agent over A2A, MCP, HTTP or a CLI, and export results to the dashboards you already watch.</p>
-          <ul class="mt-6 space-y-3 text-sm text-neutral-600 dark:text-neutral-400">
-            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-400"></span>gRPC, gRPC-Web, HTTP/JSON and MCP on one port</li>
-            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-400"></span>Scores written back to MLflow, Langfuse and Phoenix, or exported over OpenTelemetry</li>
-            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-400"></span>No default judge, so nothing is billed by surprise</li>
-            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-400"></span>Judges on Claude, OpenAI or a model you serve on vLLM, SGLang or Ollama</li>
+          <p class="text-sm font-medium text-teal-700 dark:text-teal-300">Fits your stack</p>
+          <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Plug in at either end</h2>
+          <p class="mt-4 text-gray-600 dark:text-gray-400">Send traces from any OpenTelemetry source or gateway, or read them from the MLflow, Phoenix or Langfuse you already run, point runs at your own agent over A2A, MCP, HTTP or a CLI, and export results to the dashboards you already watch.</p>
+          <ul class="mt-6 space-y-3 text-sm text-gray-600 dark:text-gray-400">
+            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300"></span>gRPC, gRPC-Web, HTTP/JSON and MCP on one port</li>
+            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300"></span>Scores written back to MLflow, Langfuse and Phoenix, or exported over OpenTelemetry</li>
+            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300"></span>No default judge, so nothing is billed by surprise</li>
+            <li class="flex gap-3"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300"></span>Judges on Claude, OpenAI or a model you serve on vLLM, SGLang or Ollama</li>
           </ul>
-          <a href={doc("/integrations/")} class="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:gap-3 dark:text-indigo-300 transition-all">Explore integrations <ArrowRight className="size-4" /></a>
+          <a href={doc("/integrations/")} class="group mt-8 inline-flex items-center gap-2 text-sm font-medium text-teal-700 dark:text-teal-300">Explore integrations <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></a>
         </div>
-        <div class="rounded-3xl border border-neutral-200 bg-white/60 p-2 backdrop-blur dark:border-white/10 dark:bg-white/[.02]">
+        <div class="rounded-2xl border border-gray-200 bg-white p-2 dark:border-white/10 dark:bg-white/[.02]">
           <ArchitectureBeams client:visible />
         </div>
       </div>
@@ -516,15 +524,15 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
     <!-- Bento -->
     <section class="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div class="mx-auto mb-12 max-w-2xl text-center">
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">Built for production</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">Everything an evaluation platform needs</h2>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">Built for production</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Everything an evaluation platform needs</h2>
       </div>
       <Features base={base} />
       <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {extras.map((x) => (
-          <a href={doc(x.href)} class="group rounded-2xl border border-neutral-200 p-5 transition-colors hover:border-indigo-400 dark:border-white/10">
-            <h3 class="flex items-center justify-between font-semibold">{x.name}<ArrowRight className="size-4 text-neutral-400 transition-transform group-hover:translate-x-1" /></h3>
-            <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{x.text}</p>
+          <a href={doc(x.href)} class="group rounded-2xl border border-gray-200 p-5 transition-colors hover:border-gray-400 dark:border-white/10">
+            <h3 class="flex items-center justify-between font-semibold">{x.name}<ArrowRight className="size-4 text-gray-400 transition-transform group-hover:translate-x-1" /></h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{x.text}</p>
           </a>
         ))}
       </div>
@@ -533,12 +541,12 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
     <!-- Code -->
     <section class="mx-auto grid max-w-6xl items-center gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[1fr_1.2fr]">
       <div>
-        <p class="text-sm font-semibold text-indigo-500 dark:text-indigo-300">Your way in</p>
-        <h2 class="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">CLI, Python or Kubernetes</h2>
-        <p class="mt-4 text-neutral-600 dark:text-neutral-400">Write an evaluator as a decorated function, run it next to the built-ins, then take the same spec to a cluster as an <code class="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-sm dark:bg-white/10">EvalRun</code> that gates your rollout.</p>
+        <p class="text-sm font-medium text-teal-700 dark:text-teal-300">Your way in</p>
+        <h2 class="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">CLI, Python or Kubernetes</h2>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Write an evaluator as a decorated function, run it next to the built-ins, then take the same spec to a cluster as an <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm dark:bg-white/10">EvalRun</code> that gates your rollout.</p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a href={doc("/examples/")} class="inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-5 py-2.5 text-sm font-medium transition-colors hover:border-indigo-400 dark:border-white/10">Browse examples <ArrowRight className="size-4" /></a>
-          <a href={doc("/integrations/kubernetes/")} class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">Kubernetes guide</a>
+          <a href={doc("/examples/")} class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium transition-colors hover:border-gray-400 dark:border-white/10">Browse examples <ArrowRight className="size-4" /></a>
+          <a href={doc("/integrations/kubernetes/")} class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">Kubernetes guide</a>
         </div>
       </div>
       <CodeTabs tabs={tabs} client:visible />
@@ -546,30 +554,28 @@ loop-detection                2  <span class="text-amber-600 font-medium">0.500<
 
     <!-- CTA -->
     <section class="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-      <div class="relative overflow-hidden rounded-3xl border border-neutral-200 bg-gradient-to-br from-indigo-500/10 via-transparent to-teal-400/10 px-6 py-16 text-center dark:border-white/10">
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#8882_1px,transparent_1px)] bg-[size:18px_18px] [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_75%)]"></div>
-        <h2 class="text-balance text-3xl font-bold tracking-tight sm:text-5xl">Start evaluating in a minute</h2>
-        <p class="mx-auto mt-4 max-w-xl text-neutral-600 dark:text-neutral-400">Open source, self-hosted and air-gappable. Bring your own models, storage, identity and secrets.</p>
-        <div class="mt-8 flex flex-wrap justify-center gap-4">
-          <RainbowButton href={doc("/docs/get-started/")}>Read the docs <BookOpen className="size-4" /></RainbowButton>
-          <a href={doc("/docs/architecture/")} class="inline-flex h-11 items-center rounded-xl border border-neutral-200 bg-white/60 px-6 font-medium transition-colors hover:border-indigo-400 dark:border-white/10 dark:bg-white/5">See the architecture</a>
+      <div class="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[.02]">
+        <h2 class="text-balance text-3xl font-semibold tracking-tight sm:text-5xl">Start evaluating in a minute</h2>
+        <p class="mx-auto mt-4 max-w-xl text-gray-600 dark:text-gray-400">Open source, self-hosted and air-gappable. Bring your own models, storage, identity and secrets.</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <a href={doc("/docs/get-started/")} class="inline-flex h-11 items-center gap-2 rounded-lg bg-gray-900 px-5 font-medium text-white transition-colors hover:bg-gray-800 active:scale-[0.98]">Read the docs <BookOpen className="size-4" /></a>
+          <a href={doc("/docs/architecture/")} class="inline-flex h-11 items-center rounded-lg border border-gray-200 bg-white px-5 font-medium transition-colors hover:border-gray-400 active:scale-[0.98] dark:border-white/10 dark:bg-white/5">See the architecture</a>
         </div>
-        <BorderBeam size={300} duration={14} />
       </div>
     </section>
   </main>
 
-  <footer class="border-t border-neutral-200 dark:border-white/5">
-    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-neutral-500 sm:flex-row sm:px-6">
+  <footer class="border-t border-gray-200 dark:border-white/5">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-gray-500 sm:flex-row sm:px-6">
       <div class="flex items-center gap-3"><span class="[&>svg]:h-6 [&>svg]:w-auto" set:html={logo} /><span>Apache-2.0</span></div>
       <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2">
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={doc("/docs/get-started/")}>Docs</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={doc("/examples/")}>Examples</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={doc("/integrations/")}>Integrations</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={doc("/docs/guides/built-in-harness/")}>Harness</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={doc("/docs/changelog/")}>Changelog</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={`${repo}/releases`}>Releases</a>
-        <a class="hover:text-neutral-900 dark:hover:text-white" href={repo}>GitHub</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={doc("/docs/get-started/")}>Docs</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={doc("/examples/")}>Examples</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={doc("/integrations/")}>Integrations</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={doc("/docs/guides/built-in-harness/")}>Harness</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={doc("/docs/changelog/")}>Changelog</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={`${repo}/releases`}>Releases</a>
+        <a class="hover:text-gray-900 dark:hover:text-white" href={repo}>GitHub</a>
       </nav>
     </div>
   </footer>

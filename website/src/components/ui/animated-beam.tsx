@@ -1,6 +1,6 @@
 // Ported from Easy UI (components/magicui/animated-beam.tsx), MIT. See THIRD_PARTY_NOTICES.md.
-import { motion } from "framer-motion";
-import { useEffect, useId, useState, type RefObject } from "react";
+// Static: draws the connecting path only, without the travelling gradient.
+import { useEffect, useState, type RefObject } from "react";
 import { cn } from "../../lib/utils";
 
 export interface AnimatedBeamProps {
@@ -9,14 +9,9 @@ export interface AnimatedBeamProps {
   fromRef: RefObject<HTMLElement | null>;
   toRef: RefObject<HTMLElement | null>;
   curvature?: number;
-  reverse?: boolean;
   pathColor?: string;
   pathWidth?: number;
   pathOpacity?: number;
-  gradientStartColor?: string;
-  gradientStopColor?: string;
-  delay?: number;
-  duration?: number;
 }
 
 export function AnimatedBeam({
@@ -25,22 +20,12 @@ export function AnimatedBeam({
   fromRef,
   toRef,
   curvature = 0,
-  reverse = false,
-  duration = 5,
-  delay = 0,
   pathColor = "gray",
-  pathWidth = 2,
-  pathOpacity = 0.2,
-  gradientStartColor = "#818cf8",
-  gradientStopColor = "#2dd4bf",
+  pathWidth = 1.5,
+  pathOpacity = 0.5,
 }: AnimatedBeamProps) {
-  const id = useId();
   const [pathD, setPathD] = useState("");
   const [dims, setDims] = useState({ width: 0, height: 0 });
-
-  const coords = reverse
-    ? { x1: ["90%", "-10%"], x2: ["100%", "0%"], y1: ["0%", "0%"], y2: ["0%", "0%"] }
-    : { x1: ["10%", "110%"], x2: ["0%", "100%"], y1: ["0%", "0%"], y2: ["0%", "0%"] };
 
   useEffect(() => {
     const update = () => {
@@ -64,27 +49,11 @@ export function AnimatedBeam({
       width={dims.width}
       height={dims.height}
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("pointer-events-none absolute left-0 top-0 transform-gpu stroke-2", className)}
+      className={cn("pointer-events-none absolute left-0 top-0", className)}
       viewBox={`0 0 ${dims.width} ${dims.height}`}
       aria-hidden="true"
     >
       <path d={pathD} stroke={pathColor} strokeWidth={pathWidth} strokeOpacity={pathOpacity} strokeLinecap="round" />
-      <path d={pathD} strokeWidth={pathWidth} stroke={`url(#${id})`} strokeOpacity="1" strokeLinecap="round" />
-      <defs>
-        <motion.linearGradient
-          className="transform-gpu"
-          id={id}
-          gradientUnits="userSpaceOnUse"
-          initial={{ x1: "0%", x2: "0%", y1: "0%", y2: "0%" }}
-          animate={coords}
-          transition={{ delay, duration, ease: [0.16, 1, 0.3, 1], repeat: Infinity, repeatDelay: 0 }}
-        >
-          <stop stopColor={gradientStartColor} stopOpacity="0" />
-          <stop stopColor={gradientStartColor} />
-          <stop offset="32.5%" stopColor={gradientStopColor} />
-          <stop offset="100%" stopColor={gradientStopColor} stopOpacity="0" />
-        </motion.linearGradient>
-      </defs>
     </svg>
   );
 }
