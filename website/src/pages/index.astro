@@ -44,21 +44,25 @@ const ecosystem = [
   "vLLM", "SGLang", "Ollama",
 ];
 
-// The hero's result table: each mean with its 95% interval, also drawn as a
-// whisker over [0, 1].
-const results = [
-  { metric: "tool-call-accuracy.recall", n: 2, mean: 0.75, lo: 0, hi: 1 },
-  { metric: "tool-call-accuracy.precision", n: 2, mean: 0.667, lo: 0, hi: 1 },
-  { metric: "tool-errors", n: 2, mean: 0.5, lo: 0, hi: 1 },
-  { metric: "loop-detection", n: 2, mean: 0.5, lo: 0.095, hi: 0.905 },
+// The hero's product view: `evalsi compare --fail-on-regression` on a
+// baseline and a candidate (illustrative numbers, real output format). Each
+// paired difference is also drawn as a whisker around zero over [-0.4, 0.4].
+const compare = [
+  { metric: "task-success", n: 40, base: 0.925, cand: 0.7, diff: -0.225, lo: -0.378, hi: -0.072, verdict: "REGRESSED" },
+  { metric: "tool-call-accuracy.recall", n: 40, base: 0.812, cand: 0.846, diff: 0.034, lo: -0.041, hi: 0.109, verdict: "" },
+  { metric: "loop-detection", n: 40, base: 0.875, cand: 0.95, diff: 0.075, lo: 0.006, hi: 0.144, verdict: "improved" },
+  { metric: "policy-violations", n: 40, base: 0.975, cand: 0.975, diff: 0, lo: -0.049, hi: 0.049, verdict: "" },
 ];
 const WIDTH = 21;
-const whisker = (r: { mean: number; lo: number; hi: number }) => {
-  const at = (v: number) => Math.round(v * (WIDTH - 1));
-  const [lo, hi, mean] = [at(r.lo), at(r.hi), at(r.mean)];
+const RANGE = 0.4;
+const signed = (v: number) => (v > 0 ? "+" : v < 0 ? "-" : " ") + Math.abs(v).toFixed(3);
+const whisker = (r: { diff: number; lo: number; hi: number }) => {
+  const at = (v: number) => Math.round(((Math.max(-RANGE, Math.min(RANGE, v)) + RANGE) / (2 * RANGE)) * (WIDTH - 1));
+  const [lo, hi, mid, zero] = [at(r.lo), at(r.hi), at(r.diff), at(0)];
   return Array.from({ length: WIDTH }, (_, i): [string, string] =>
-    i === mean ? ["●", "mean"] : i === lo || i === hi ? ["│", "in"] : i > lo && i < hi ? ["─", "in"] : ["·", "out"]);
+    i === mid ? ["●", "mid"] : i === lo || i === hi ? ["│", "in"] : i > lo && i < hi ? ["─", "in"] : i === zero ? ["┊", "zero"] : ["·", "out"]);
 };
+const tone = (v: string) => (v === "REGRESSED" ? "text-[#ff6369]" : v === "improved" ? "text-teal-300" : "text-[#a3a9b8]");
 
 const tabs = [
   { label: "Agent gate", lang: "yaml", code: `# evalsi run -f agent-gate.yaml    exit 0 passes, exit 3 fails the build
@@ -313,7 +317,7 @@ const extras = [
 
   <main class="overflow-x-clip">
     <!-- Hero -->
-    <section>
+    <section class="bg-[#f5f7fa] dark:bg-transparent">
       <div class="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
         <div class="max-w-4xl">
           <a href={doc("/docs/guides/onboarding/")} class="animate-fade-up group inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
@@ -340,25 +344,28 @@ const extras = [
           </p>
         </div>
 
-        <!-- Result table: every mean is shown with its interval -->
-        <figure class="animate-fade-up mt-16 overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-[0_8px_24px_rgba(0,0,0,0.06)] [animation-delay:240ms] dark:border-white/10 dark:bg-white/[.02]">
-          <div class="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/[.03]">
-            <span class="size-2.5 rounded-full bg-gray-300"></span><span class="size-2.5 rounded-full bg-gray-300"></span><span class="size-2.5 rounded-full bg-gray-300"></span>
-            <span class="ml-2 font-mono text-xs text-gray-500">evalsi eval</span>
+        <!-- Product view: the release decision the page is about -->
+        <figure class="animate-fade-up mt-16 overflow-hidden rounded-2xl border border-black/10 bg-[#0b0d14] text-left shadow-[0_24px_48px_-12px_rgba(11,13,20,0.35)] [animation-delay:240ms]">
+          <div class="flex items-center gap-2 border-b border-white/[.08] bg-[#11141c] px-4 py-3">
+            <span class="size-2.5 rounded-full bg-white/15"></span><span class="size-2.5 rounded-full bg-white/15"></span><span class="size-2.5 rounded-full bg-white/15"></span>
+            <span class="ml-2 font-mono text-xs text-[#7a8296]">ci · pull request #418</span>
           </div>
-          <pre class="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed text-gray-700 sm:p-6 sm:text-[13px] dark:text-gray-300"><code><span class="text-teal-700">$</span> evalsi eval --data agent-runs.jsonl --evaluators tool-call-accuracy,tool-errors,loop-detection
+          <pre class="overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.7] text-[#a3a9b8] sm:p-6 sm:text-[13px]"><code><span class="text-teal-300">$</span> <span class="text-[#eef0f5]">evalsi compare baseline.json candidate.json --fail-on-regression</span>
 
-<span class="text-gray-500">2 records · 3 evaluators</span>
-
-<span class="text-gray-500">metric                        n  mean   95% CI          {"0".padEnd(10)}{"1".padStart(11)}  skipped  errors</span>
-{results.map((r) => (<Fragment>{r.metric.padEnd(30)}{String(r.n).padEnd(3)}<span class="font-medium text-gray-900 dark:text-white">{r.mean.toFixed(3)}</span>  [{r.lo.toFixed(3)}, {r.hi.toFixed(3)}]  <span aria-hidden="true">{whisker(r).map(([ch, kind]) => <span class={kind === "mean" ? "text-teal-700" : kind === "in" ? "text-gray-500" : "text-gray-200 dark:text-gray-700"}>{ch}</span>)}</span>{"        0       0\n"}</Fragment>))}</code></pre>
-          <figcaption class="border-t border-gray-200 px-5 py-3 text-xs text-gray-500 sm:px-6 dark:border-white/10">Every mean comes with its 95% interval. Two records give wide intervals, so a gate on the lower bound (<code class="font-mono">ci_low</code>) cannot pass on luck.</figcaption>
+<span class="text-[#7a8296]">metric                     n   baseline  candidate  diff    CI                {"-0.4".padEnd(10)}0{"+0.4".padStart(10)}</span>
+{compare.map((r) => (<Fragment><span class="text-[#eef0f5]">{r.metric.padEnd(27)}</span>{String(r.n).padEnd(4)}{r.base.toFixed(3).padEnd(10)}{r.cand.toFixed(3).padEnd(11)}<span class={tone(r.verdict)}>{signed(r.diff)}</span>  {`[${signed(r.lo).trim()}, ${signed(r.hi).trim()}]`.padEnd(18)}<span aria-hidden="true">{whisker(r).map(([ch, kind]) => <span class={kind === "out" ? "text-white/15" : kind === "zero" ? "text-white/30" : kind === "mid" ? tone(r.verdict) : r.verdict ? tone(r.verdict) : "text-[#7a8296]"}>{ch}</span>)}</span>  <span class={tone(r.verdict)}>{r.verdict}</span>{"\n"}</Fragment>))}
+<span class="text-teal-300">$</span> <span class="text-[#eef0f5]">echo $?</span>
+<span class="text-[#ff6369]">3</span></code></pre>
+          <figcaption class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-white/[.08] bg-[#11141c] px-5 py-3 text-xs text-[#a3a9b8] sm:px-6">
+            <span class="rounded bg-[#ff6369]/15 px-1.5 py-0.5 font-mono text-[#ff6369]">exit 3</span>
+            <span>task-success fell by 0.225, and its whole 95% interval is below zero, so the build stops. Improvements inside the noise are not called out.</span>
+          </figcaption>
         </figure>
       </div>
     </section>
 
     <!-- Ecosystem -->
-    <section class="border-y border-gray-200/70 py-10 dark:border-white/5">
+    <section class="border-b border-gray-200/70 py-10 dark:border-white/5">
       <div class="mx-auto max-w-6xl px-4 sm:px-6">
         <p class="text-sm text-gray-500">Works with the tools you already use</p>
         <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
@@ -381,6 +388,13 @@ const extras = [
               <span class="flex size-8 items-center justify-center rounded-lg border border-gray-200 font-mono text-sm text-gray-500 dark:border-white/10">{w.step}</span>
               <h3 class="mt-4 flex items-center justify-between text-lg font-semibold">{w.name}<ArrowRight className="size-4 text-gray-400 transition-transform group-hover:translate-x-1" /></h3>
               <p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{w.text}</p>
+              {w.step === "3" && (
+                <p class="mt-auto flex gap-2 pt-5 font-mono text-xs">
+                  <span class="rounded bg-teal-700/10 px-1.5 py-0.5 text-teal-800">PASS</span>
+                  <span class="rounded bg-red-600/10 px-1.5 py-0.5 text-red-700">BLOCK</span>
+                  <span class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">INSUFFICIENT</span>
+                </p>
+              )}
             </a>
           </li>
         ))}
