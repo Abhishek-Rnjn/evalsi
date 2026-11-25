@@ -9,7 +9,7 @@ require (
 	connectrpc.com/grpcreflect v1.3.1
 	connectrpc.com/vanguard v0.4.0
 	github.com/envoyproxy/go-control-plane/envoy v1.39.0
-	github.com/go-jose/go-jose/v4 v4.1.5
+	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/go-logr/logr v1.4.4
 	github.com/google/go-containerregistry v0.22.1
 	github.com/jackc/pgx/v5 v5.11.0
