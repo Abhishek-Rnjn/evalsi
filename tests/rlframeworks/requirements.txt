@@ -3,7 +3,7 @@
 # flash-attn and deepspeed, which need CUDA, and none of them is on the reward
 # path these tests exercise.
 verl==0.9.1
-transformers==5.10.4
+transformers==5.10.1
 tokenizers==0.22.2
 tensordict==0.10.0
 omegaconf==2.3.1
